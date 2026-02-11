@@ -622,6 +622,38 @@ void GridBasedRouter::set_net_all_layers_pref_weights(const int _netId, const in
     return;
 }
 
+bool GridBasedRouter::get_net_skip_routing(const std::string &name) {
+
+    // Find net in kicadDB
+    net* n = nullptr;
+    bool found = mDb.getNet(name, n);
+
+    if (found && n != nullptr) {
+      // use n
+      auto &gridNet = this->mGridNets.at(n->getId());
+      return gridNet.getSkipRouting();
+    } else {
+        std::cout << " Net: " << name << " not found!!" << std::endl;
+	return false;
+    }
+}
+
+void GridBasedRouter::set_net_skip_routing(const std::string &name,const bool skip) {
+
+    // Find net in kicadDB
+    net* n = nullptr;
+    bool found = mDb.getNet(name, n);
+
+    if (found && n != nullptr) {
+      // use n
+      auto &gridNet = this->mGridNets.at(n->getId());
+      gridNet.setSkipRouting(skip);
+    } else {
+        std::cout << " Net: " << name << " not found!!" << std::endl;
+    }
+    return;
+}
+
 void GridBasedRouter::initialization() {
     // Initilization
     this->setupLayerMapping();
@@ -648,14 +680,19 @@ void GridBasedRouter::route() {
     bestTotalRouteCost = 0.0;
     auto &nets = mDb.getNets();
     for (auto &net : nets) {
-        // if (net.getId() != 19 && net.getId() != 7)
-        //     continue;
 
-        std::cout << "\n\nRouting net: " << net.getName() << ", netId: " << net.getId() << ", netDegree: " << net.getPins().size() << "..." << std::endl;
+	// Skip 1-term net
         if (net.getPins().size() < 2)
             continue;
 
-        auto &gridRoute = this->mGridNets.at(net.getId());
+	 // Get grid route
+         auto &gridRoute = this->mGridNets.at(net.getId());
+
+	 // Skip nets with skipRouting
+         if (gridRoute.getSkipRouting())
+             continue;
+
+        std::cout << "\n\nRouting net: " << net.getName() << ", netId: " << net.getId() << ", netDegree: " << net.getPins().size() << "..." << std::endl;
         if (net.getId() != gridRoute.netId)
             std::cout << "!!!!!!! inconsistent net.getId(): " << net.getId() << ", gridRoute.netId: " << gridRoute.netId << std::endl;
 
@@ -716,6 +753,11 @@ void GridBasedRouter::route() {
                 continue;
 
             auto &gridRoute = mGridNets.at(net.getId());
+
+	    // Skip nets with skipRouting
+            if (gridRoute.getSkipRouting())
+                continue;
+
             if (net.getId() != gridRoute.netId)
                 std::cout << "!!!!!!! inconsistent net.getId(): " << net.getId() << ", gridRoute.netId: " << gridRoute.netId << std::endl;
 
