@@ -49,6 +49,9 @@ class GridBasedRouter {
 
     void set_net_layer_pref_weight(const int _netId, const std::string &_layerName, const int _weight);
     void set_net_all_layers_pref_weights(const int _netId, const int _weight);
+    bool get_net_skip_routing(const std::string &name);
+    void set_net_skip_routing(const std::string &name, const bool skip);
+    //void set_net_skip_routing(const int _netId, const bool skip);
 
     void set_diff_pair_net_id(const int _netId1, const int _netId2);
 

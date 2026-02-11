@@ -980,6 +980,39 @@ void GridBasedRouter::set_diff_pair_net_id(const int _netId1, const int _netId2)
     }
 }
 
+bool GridBasedRouter::get_net_skip_routing(const std::string &name) {
+
+    // Find net in kicadDB
+    net* n = nullptr;
+    bool found = mDb.getNet(name, n);
+
+    if (found && n != nullptr) {
+      // use n
+      auto &gridNet = this->mGridNets.at(n->getId());
+      return gridNet.getSkipRouting();
+    } else {
+        std::cout << " Net: " << name << " not found!!" << std::endl;
+	return false;
+    }
+}
+
+void GridBasedRouter::set_net_skip_routing(const std::string &name,const bool skip) {
+
+    // Find net in kicadDB
+    net* n = nullptr;
+    bool found = mDb.getNet(name, n);
+
+    if (found && n != nullptr) {
+      // use n
+      auto &gridNet = this->mGridNets.at(n->getId());
+      gridNet.setSkipRouting(skip);
+    } else {
+        std::cout << " Net: " << name << " not found!!" << std::endl;
+    }
+    return;
+}
+
+>>>>>>> PcbRouter/daryl_dev
 void GridBasedRouter::initialization() {
     // Initilization
     this->setupLayerMapping();
@@ -1218,12 +1251,21 @@ void GridBasedRouter::routeSignalNets(const bool ripupRoutedNet) {
         // if (net.getId() != 31 && net.getId() != 34 && net.getId() != 18 /*&& net.getId() != 28*/)
         //     continue;
 
-        std::cout << "\n\nRouting net: " << net.getName() << ", netId: " << net.getId() << ", netDegree: " << net.getPins().size() << "..." << std::endl;
+	// Skip 1-term net
         if (net.getPins().size() < 2)
             continue;
 
         auto &gridRoute = this->mGridNets.at(net.getId());
         if (net.getId() != gridRoute.netId) {
+	 // Get grid route
+         auto &gridRoute = this->mGridNets.at(net.getId());
+
+	 // Skip nets with skipRouting
+         if (gridRoute.getSkipRouting())
+             continue;
+
+        std::cout << "\n\nRouting net: " << net.getName() << ", netId: " << net.getId() << ", netDegree: " << net.getPins().size() << "..." << std::endl;
+        if (net.getId() != gridRoute.netId)
             std::cout << "!!!!!!! inconsistent net.getId(): " << net.getId() << ", gridRoute.netId: " << gridRoute.netId << std::endl;
         }
         if (gridRoute.isDiffPair()) {
@@ -1341,6 +1383,11 @@ void GridBasedRouter::route() {
                 continue;
 
             auto &gridRoute = mGridNets.at(net.getId());
+
+	    // Skip nets with skipRouting
+            if (gridRoute.getSkipRouting())
+                continue;
+
             if (net.getId() != gridRoute.netId)
                 std::cout << "!!!!!!! inconsistent net.getId(): " << net.getId() << ", gridRoute.netId: " << gridRoute.netId << std::endl;
 

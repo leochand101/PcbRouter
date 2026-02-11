@@ -71,6 +71,10 @@ class MultipinRoute {
     void setLayerCost(const int layerId, const pr::prIntCost cost) { mLayerCosts.at(layerId) = cost; }
     void setAllLayersCosts(const pr::prIntCost cost) { mLayerCosts.assign(mLayerCosts.size(), cost); }
 
+    // skipRouting attribute
+    void setSkipRouting(const bool skip) { skipRouting = skip; }
+    bool getSkipRouting() const { return skipRouting; }
+
     friend class BoardGrid;
     friend class MultipinRoute;
     friend class GridBasedRouter;
@@ -81,6 +85,7 @@ class MultipinRoute {
     int mPairNetId = -1;
     int mGridDiffPairNetclassId = -1;
     float currentRouteCost = 0.0;
+    bool skipRouting = false;
     std::vector<GridPin> mGridPins;
     std::vector<GridPath> mGridPaths;
     std::vector<pr::prIntCost> mLayerCosts;  //Layer preferences for this net, align with board grid layer
